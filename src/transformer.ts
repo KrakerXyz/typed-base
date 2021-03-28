@@ -10,15 +10,30 @@ export function transformer(program: ts.Program): ts.TransformerFactory<ts.Sourc
          if (ts.isNewExpression(node) && node.expression.getText() === 'TypedSchema') {
             if (node.typeArguments?.length !== 1) { throw new Error('Expected exactly one generic arguments for TypedSchema'); }
 
+            if (node.arguments?.length) { throw new Error('Do not pass arguments to new TypedSchema<>'); }
+
             const typeNode = node.typeArguments[0];
             console.log(`Found TypedSchema for ${typeNode.getText()}`);
 
             const typeChecker = program.getTypeChecker();
             const type = typeChecker.getTypeFromTypeNode(typeNode);
             const symbols = typeChecker.getPropertiesOfType(type);
-            const schemaProperties = symbols.map(s => createField(s, typeChecker));
 
-            console.log(JSON.stringify(schemaProperties, null, 3));
+            const fields = symbols.map(s => createField(s, typeChecker));
+
+            const str = writeFieldsAsString(fields);
+
+            console.log(str);
+
+            //console.log(JSON.stringify(schemaProperties, null, 3));
+
+            const newNode = context.factory.createNewExpression(
+               node.expression,
+               node.typeArguments,
+               [createExpression(fields)]
+            );
+
+            return newNode;
 
          }
 
@@ -31,12 +46,12 @@ export function transformer(program: ts.Program): ts.TransformerFactory<ts.Sourc
 
 }
 
-function createField(symbol: ts.Symbol, typeChecker: ts.TypeChecker) {
+function createField(symbol: ts.Symbol, typeChecker: ts.TypeChecker): Field {
    return {
       name: symbol.getName(),
       allowUndefined: symbol.declarations.some(d => (d as ts.PropertySignature).questionToken),
       allowNull: isNullable(symbol),
-      type: getTypes(symbol, typeChecker)
+      types: getTypes(symbol, typeChecker)
    }
 }
 
@@ -48,7 +63,7 @@ function isNullable(symbol: ts.Symbol): boolean {
    return false;
 }
 
-function getTypes(symbol: ts.Symbol, typeChecker: ts.TypeChecker) {
+function getTypes(symbol: ts.Symbol, typeChecker: ts.TypeChecker): FieldType[] {
 
    const fullName = `${(symbol as any).parent?.name}.${symbol.name}`;
 
@@ -71,7 +86,7 @@ function getTypes(symbol: ts.Symbol, typeChecker: ts.TypeChecker) {
       types = [...(types[0] as ts.UnionTypeNode).types];
    }
 
-   const returnTypes: (string | Record<string, any>[])[] = [];
+   const returnTypes: FieldType[] = [];
 
    for (const t of types) {
       const retType = getType(fullName, t, typeChecker);
@@ -83,7 +98,7 @@ function getTypes(symbol: ts.Symbol, typeChecker: ts.TypeChecker) {
 
 }
 
-function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker) {
+function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker): FieldType | undefined {
    if (ts.isLiteralTypeNode(t) && t.getChildren()[0].kind === ts.SyntaxKind.NullKeyword) { return undefined; }
 
    switch (t.kind) {
@@ -99,5 +114,82 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker) 
       }
       default: throw new Error(`Property type ${ts.SyntaxKind[t.kind]} for ${fullName} not supported`);
    }
+}
+
+function createExpression(fields: Field[]): ts.ArrayLiteralExpression {
+
+   const elements = fields.map(f => {
+
+      const typesElements = f.types.map(t => {
+
+         if (typeof t === 'string') {
+            return ts.factory.createStringLiteral(t);
+         } else {
+            return createExpression(t);
+         }
+
+      });
+
+      const name = ts.factory.createPropertyAssignment('name', ts.factory.createStringLiteral(f.name));
+      const allowUndefined = ts.factory.createPropertyAssignment('allowUndefined', f.allowUndefined ? ts.factory.createTrue() : ts.factory.createFalse());
+      const allowNull = ts.factory.createPropertyAssignment('allowNull', f.allowNull ? ts.factory.createTrue() : ts.factory.createFalse());
+      const types = ts.factory.createPropertyAssignment('types', ts.factory.createArrayLiteralExpression(typesElements));
+
+
+      return ts.factory.createObjectLiteralExpression([
+         name,
+         allowNull,
+         allowUndefined,
+         types
+      ]);
+
+   });
+
+   const array = ts.factory.createArrayLiteralExpression(elements);
+   return array;
+
+}
+
+function writeFieldsAsString(fields: Field[]): string {
+
+   const tokens: string[] = [];
+
+   tokens.push('[');
+
+   for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
+      if (i) { tokens.push(','); }
+      tokens.push('{');
+      tokens.push(`name:'${f.name}',`);
+      tokens.push(`allowUndefined:${f.allowUndefined},`);
+      tokens.push(`allowNull:${f.allowNull},`);
+      tokens.push('types:[');
+      for (let it = 0; it < f.types.length; it++) {
+         const type = f.types[it];
+         if (it) { tokens.push(','); }
+         if (typeof type === 'string') {
+            tokens.push(`'${type}'`);
+         } else {
+            const inner = writeFieldsAsString(type);
+            tokens.push(inner);
+         }
+      }
+      tokens.push(']');
+      tokens.push('}');
+   }
+
+   tokens.push(']');
+
+   return tokens.join('');
+
+}
+
+type FieldType = 'number' | 'string' | 'boolean' | Field[];
+
+interface Field {
+   name: string;
+   allowUndefined: boolean;
+   allowNull: boolean;
+   types: FieldType[];
 }
 

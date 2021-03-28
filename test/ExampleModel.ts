@@ -9,10 +9,19 @@ export interface ExampleModel {
 }
 
 export interface InnerModel {
-
    id: string;
-
    hasGood: boolean;
+   //enumNumber: EnumNumberTest;
+   //enumString: EnumStringTest | null;
 
+}
 
+export enum EnumNumberTest {
+   One,
+   Two
+}
+
+export enum EnumStringTest {
+   Foo = 'foo',
+   Bar = 'bar'
 }
