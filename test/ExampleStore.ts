@@ -1,4 +1,5 @@
 import { ExampleModel } from './ExampleModel';
-import { TypedSchema } from './TypedSchema';
 
-const schema = new TypedSchema<ExampleModel>();
+import { TypedEntity } from '../src/orm/TypedEntity';
+
+const entity = new TypedEntity<ExampleModel>();

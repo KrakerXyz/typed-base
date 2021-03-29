@@ -1,37 +1,39 @@
 
 import * as ts from 'typescript';
+import { TypedEntityNode } from './transformer/TypedEntityNode';
 
 export function transformer(program: ts.Program): ts.TransformerFactory<ts.SourceFile> {
 
    return (context: ts.TransformationContext) => {
 
-      const visit: ts.Visitor = (node) => {
+      const visit: ts.Visitor = (node): ts.Node => {
 
-         if (ts.isNewExpression(node) && node.expression.getText() === 'TypedSchema') {
-            if (node.typeArguments?.length !== 1) { throw new Error('Expected exactly one generic arguments for TypedSchema'); }
+         if (ts.isNewExpression(node) && node.expression.getText() === 'TypedEntity') {
 
-            if (node.arguments?.length) { throw new Error('Do not pass arguments to new TypedSchema<>'); }
+            //If the user gave an explicit config, don't overwrite them
+            if (node.arguments?.length) {
+               return node;
+            }
 
-            const typeNode = node.typeArguments[0];
-            console.log(`Found TypedSchema for ${typeNode.getText()}`);
+            const typedEntityNode = TypedEntityNode.create(node, program.getTypeChecker());
+            if (typedEntityNode) { return typedEntityNode.getConfiguredNode(); }
 
-            const typeChecker = program.getTypeChecker();
-            const type = typeChecker.getTypeFromTypeNode(typeNode);
-            const symbols = typeChecker.getPropertiesOfType(type);
+            // console.log(`Found TypedEntity for ${typeNode.getText()}`);
 
-            const fields = symbols.map(s => createField(s, typeChecker));
+            // const typeChecker = program.getTypeChecker();
 
-            const str = writeFieldsAsString(fields);
 
-            console.log(str);
+            // const str = writeFieldsAsString(fields);
 
-            const newNode = context.factory.createNewExpression(
-               node.expression,
-               node.typeArguments,
-               [createExpression(fields)]
-            );
+            // console.log(str);
 
-            return newNode;
+            // const newNode = context.factory.createNewExpression(
+            //    node.expression,
+            //    node.typeArguments,
+            //    [createExpression(fields)]
+            // );
+
+            // return newNode;
 
          }
 
