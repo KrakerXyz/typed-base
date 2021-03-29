@@ -25,8 +25,6 @@ export function transformer(program: ts.Program): ts.TransformerFactory<ts.Sourc
 
             console.log(str);
 
-            //console.log(JSON.stringify(schemaProperties, null, 3));
-
             const newNode = context.factory.createNewExpression(
                node.expression,
                node.typeArguments,
@@ -108,6 +106,22 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
       case ts.SyntaxKind.TypeReference: {
          const refType = t as ts.TypeReferenceNode;
          const type = typeChecker.getTypeFromTypeNode(refType);
+
+         const enumDecl = type.aliasSymbol?.declarations[0];
+         if (enumDecl && ts.isEnumDeclaration(enumDecl)) {
+            const members = enumDecl.members;
+            const values: ValueList['values'] = members.map((m, i) => {
+               if (!m.initializer) { return i; }
+               if (ts.isStringLiteral(m.initializer)) {
+                  return m.initializer.text;
+               }
+               throw new Error(`Unknown initializer type for enum of ${fullName}`);
+            });
+            return {
+               values
+            };
+         }
+
          const typeProps = typeChecker.getPropertiesOfType(type);
          const fields = typeProps.map(p => createField(p, typeChecker));
          return fields;
@@ -124,8 +138,16 @@ function createExpression(fields: Field[]): ts.ArrayLiteralExpression {
 
          if (typeof t === 'string') {
             return ts.factory.createStringLiteral(t);
+         } else if (isValueList(t)) {
+            return ts.factory.createObjectLiteralExpression([
+               ts.factory.createPropertyAssignment('type', ts.factory.createStringLiteral('enum')),
+               ts.factory.createPropertyAssignment('values', ts.factory.createArrayLiteralExpression(t.values.map(v => {
+                  if (typeof v === 'string') { return ts.factory.createStringLiteral(v); }
+                  return ts.factory.createNumericLiteral(v);
+               })))
+            ])
          } else {
-            return createExpression(t);
+            return createExpression(t as Field[]);
          }
 
       });
@@ -169,6 +191,11 @@ function writeFieldsAsString(fields: Field[]): string {
          if (it) { tokens.push(','); }
          if (typeof type === 'string') {
             tokens.push(`'${type}'`);
+         } else if (isValueList(type)) {
+            tokens.push(`{type:'enum',values:[`);
+            const valueList = type.values.map(v => typeof v === 'string' ? `'${v}'` : v.toString());
+            tokens.push(valueList.join(','));
+            tokens.push(']}');
          } else {
             const inner = writeFieldsAsString(type);
             tokens.push(inner);
@@ -184,12 +211,20 @@ function writeFieldsAsString(fields: Field[]): string {
 
 }
 
-type FieldType = 'number' | 'string' | 'boolean' | Field[];
+type FieldType = 'number' | 'string' | 'boolean' | ValueList | Field[];
 
 interface Field {
    name: string;
    allowUndefined: boolean;
    allowNull: boolean;
    types: FieldType[];
+}
+
+interface ValueList {
+   values: (number | string)[]
+}
+
+function isValueList(t: FieldType): t is ValueList {
+   return !!(t as ValueList).values
 }
 
