@@ -32,13 +32,13 @@ export class TypedEntityNode {
 
       const tokens: string[] = [];
       tokens.push('{fields:');
-      this.writeFieldConfig(this._config.fields, tokens);
+      this.writeFieldConfigString(this._config.fields, tokens);
       tokens.push('}');
       return tokens.join('');
 
    }
 
-   private writeFieldConfig(field: FieldConfig, tokens: string[]) {
+   private writeFieldConfigString(field: FieldConfig, tokens: string[]) {
 
       tokens.push('{');
       let isFirst = true;
@@ -55,7 +55,7 @@ export class TypedEntityNode {
             if (!isFirst2) {
                tokens.push(',');
             }
-            this.writeFieldValue(v, tokens);
+            this.writeFieldValueString(v, tokens);
             isFirst2 = false;
          }
          tokens.push(']}');
@@ -64,7 +64,7 @@ export class TypedEntityNode {
       tokens.push('}');
    }
 
-   private writeFieldValue(value: FieldValue, tokens: string[]) {
+   private writeFieldValueString(value: FieldValue, tokens: string[]) {
       tokens.push(`{type:${value.type}`);
       switch (value.type) {
          case ValueType.Null: break;
@@ -76,35 +76,16 @@ export class TypedEntityNode {
          case ValueType.Value: tokens.push(`, value:'${value.value}'`); break;
          case ValueType.Array: {
             tokens.push(`, value:`);
-            this.writeFieldValue(value.value, tokens);
+            this.writeFieldValueString(value.value, tokens);
             break;
          }
          case ValueType.Object: {
             tokens.push(', value:');
-            this.writeFieldConfig(value.value, tokens);
+            this.writeFieldConfigString(value.value, tokens);
             break;
          }
       }
 
       tokens.push('}');
-      // tokens.push(`name:'${f.name}',`);
-      // tokens.push(`allowUndefined:${f.allowUndefined},`);
-      // tokens.push(`allowNull:${f.allowNull},`);
-      // tokens.push('types:[');
-      // for (let it = 0; it < f.types.length; it++) {
-      //    const type = f.types[it];
-      //    if (it) { tokens.push(','); }
-      //    if (typeof type === 'string') {
-      //       tokens.push(`'${type}'`);
-      //    } else if (isValueList(type)) {
-      //       tokens.push(`{type:'enum',values:[`);
-      //       const valueList = type.values.map(v => typeof v === 'string' ? `'${v}'` : v.toString());
-      //       tokens.push(valueList.join(','));
-      //       tokens.push(']}');
-      //    } else {
-      //       const inner = writeFieldsAsString(type);
-      //       tokens.push(inner);
-      //    }
-      // }
    }
 }

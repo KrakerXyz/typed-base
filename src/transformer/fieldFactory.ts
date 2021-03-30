@@ -93,11 +93,17 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
             return values;
          }
 
+         const typeProperties = typeChecker.getPropertiesOfType(type);
+         const fields = typeProperties.map(s => createFieldConfig(s, typeChecker));
+         const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as FieldConfig);
+
          return [{
-            This isn't working yet - Declaration for symbol was not a PropertyDeclaration ("c:/Users/joshk/Code/typed-base/test/ExampleModel".InnerModel
             type: ValueType.Object,
-            value: createFieldConfig(type.symbol, typeChecker)
+            value: fieldConfig
          }];
+
+      }
+      case ts.SyntaxKind.ArrayType: {
 
       }
       default: throw new Error(`Property type ${ts.SyntaxKind[t.kind]} for ${fullName} not supported`);

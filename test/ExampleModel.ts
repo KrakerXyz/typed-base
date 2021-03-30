@@ -3,17 +3,18 @@ export interface ExampleModel {
    id?: string | number | null;
    created: number;
    name: string;
-   description: string | null;
    imUndefinable?: string;
-   inner: InnerModel | null;
+   inner: InnerModel;
    enumNumber: EnumNumberTest;
-   enumString: EnumStringTest | null;
+   enumStringOrNull: EnumStringTest | null;
+   arrayString: string[];
+   stringOrArrayNumber: string | number[];
+   arrayOfNumberOrString: (string | number)[];
 }
 
 export interface InnerModel {
    id: string;
    hasGood: boolean;
-
 }
 
 export enum EnumNumberTest {
