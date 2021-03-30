@@ -1,20 +1,20 @@
 
 export interface ExampleModel {
-   id: string;
+   id?: string | number | null;
    created: number;
    name: string;
    description: string | null;
    imUndefinable?: string;
-   //inner: InnerModel | null;
+   inner: InnerModel | null;
    enumNumber: EnumNumberTest;
    enumString: EnumStringTest | null;
 }
 
-// export interface InnerModel {
-//    id: string;
-//    hasGood: boolean;
+export interface InnerModel {
+   id: string;
+   hasGood: boolean;
 
-// }
+}
 
 export enum EnumNumberTest {
    One,
