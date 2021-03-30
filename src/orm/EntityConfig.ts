@@ -37,5 +37,5 @@ export interface ObjectValue {
 
 export interface ArrayValue {
    type: ValueType.Array;
-   value: FieldValue
+   value: FieldValue[]
 }

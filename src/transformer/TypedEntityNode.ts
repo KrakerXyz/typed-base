@@ -75,8 +75,12 @@ export class TypedEntityNode {
          }
          case ValueType.Value: tokens.push(`, value:'${value.value}'`); break;
          case ValueType.Array: {
-            tokens.push(`, value:`);
-            this.writeFieldValueString(value.value, tokens);
+            tokens.push(`, value:[`);
+            for (let i = 0; i < value.value.length; i++) {
+               if (!i) { tokens.push(','); }
+               this.writeFieldValueString(value.value[i], tokens);
+            }
+            tokens.push(']');
             break;
          }
          case ValueType.Object: {

@@ -12,8 +12,6 @@ export function createFieldConfig(symbol: ts.Symbol, typeChecker: ts.TypeChecker
    const declaration = symbol.declarations[0];
    if (!ts.isPropertySignature(declaration)) { throw new Error(`Declaration for symbol was not a PropertyDeclaration (${fullName})`); }
 
-
-
    const config: FieldConfig = {};
    config[symbol.name] = {
       allowUndefined: !!declaration.questionToken,
@@ -30,14 +28,7 @@ function createFieldValues(propertySignature: ts.PropertySignature, fullName: st
       throw new Error(`PropertySignature did not have a type (${fullName})`);
    }
 
-   let types = [propertySignature.type];
-
-
-   if (ts.isUnionTypeNode(types[0])) {
-      types = [...(types[0] as ts.UnionTypeNode).types];
-   }
-
-   return types.map(t => getType(fullName, t, typeChecker)).flatMap(a => a);
+   return getType(fullName, propertySignature.type, typeChecker);
 
 }
 
@@ -104,7 +95,21 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
 
       }
       case ts.SyntaxKind.ArrayType: {
-
+         const elementType = (t as ts.ArrayTypeNode).elementType;
+         const elementFieldValues = getType(fullName, elementType, typeChecker);
+         return [{
+            type: ValueType.Array,
+            value: elementFieldValues
+         }];
+      }
+      case ts.SyntaxKind.ParenthesizedType: {
+         const innerType = (t as ts.ParenthesizedTypeNode).type;
+         const typeFieldValues = getType(fullName, innerType, typeChecker);
+         return typeFieldValues;
+      }
+      case ts.SyntaxKind.UnionType: {
+         const unionTypeFields = (t as ts.UnionTypeNode).types.map(t => getType(fullName, t, typeChecker));
+         return unionTypeFields.flatMap(t => t);
       }
       default: throw new Error(`Property type ${ts.SyntaxKind[t.kind]} for ${fullName} not supported`);
    }
