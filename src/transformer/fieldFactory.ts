@@ -15,20 +15,10 @@ export function createFieldConfig(symbol: ts.Symbol, typeChecker: ts.TypeChecker
    const config: FieldConfig = {};
    config[symbol.name] = {
       allowUndefined: !!declaration.questionToken,
-      values: createFieldValues(declaration, fullName, typeChecker)
+      values: getType(fullName, declaration.type!, typeChecker)
    }
 
    return config;
-
-}
-
-function createFieldValues(propertySignature: ts.PropertySignature, fullName: string, typeChecker: ts.TypeChecker): FieldValue[] {
-
-   if (!propertySignature.type) {
-      throw new Error(`PropertySignature did not have a type (${fullName})`);
-   }
-
-   return getType(fullName, propertySignature.type, typeChecker);
 
 }
 

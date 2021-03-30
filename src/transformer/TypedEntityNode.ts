@@ -4,7 +4,7 @@ import { createFieldConfig } from './fieldFactory';
 
 export class TypedEntityNode {
 
-   private constructor(private readonly _config: EntityConfig) { }
+   private constructor(private readonly _config: EntityConfig, private readonly _expression: ts.LeftHandSideExpression, private readonly _typeNode: ts.TypeNode) { }
 
    public static create(node: ts.NewExpression, typeChecker: ts.TypeChecker): TypedEntityNode {
       if (node.typeArguments?.length !== 1) { throw new Error('Expected exactly one generic arguments for TypedEntity'); }
@@ -17,16 +17,51 @@ export class TypedEntityNode {
 
       const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as FieldConfig);
 
-      return new TypedEntityNode({ fields: fieldConfig });
+      return new TypedEntityNode({ fields: fieldConfig }, node.expression, typeNode);
 
    }
 
    /** Returns a new node to be used in place of the original NewExpression node that includes a config object constructor parameter */
    public getNode(): ts.NewExpression {
-      return null as any as ts.NewExpression;
+
+      const fieldsObject = this.getFieldConfigExpression(this._config.fields);
+
+      const configProperties: ts.ObjectLiteralElementLike[] = [
+         ts.factory.createPropertyAssignment('fields', fieldsObject)
+      ];
+
+      const configExpression = ts.factory.createObjectLiteralExpression(configProperties);
+
+      return ts.factory.createNewExpression(this._expression, [this._typeNode], [configExpression]);
    }
 
+   private getFieldConfigExpression(fieldConfig: FieldConfig): ts.ObjectLiteralExpression {
 
+      const properties: ts.ObjectLiteralElementLike[] = [];
+
+      for (const key of Object.getOwnPropertyNames(fieldConfig)) {
+
+         const fieldValue = fieldConfig[key];
+
+         const fieldObject = ts.factory.createObjectLiteralExpression([
+            ts.factory.createPropertyAssignment('allowUndefined', fieldValue.allowUndefined ? ts.factory.createTrue() : ts.factory.createFalse()),
+            ts.factory.createPropertyAssignment('values', this.getFieldValuesExpression(fieldValue.values))
+         ]);
+
+         properties.push(ts.factory.createPropertyAssignment(key, fieldObject));
+
+      }
+
+      return ts.factory.createObjectLiteralExpression(properties);
+   }
+
+   private getFieldValuesExpression(fieldValue: FieldValue[]): ts.ArrayLiteralExpression {
+
+      const elements: ts.Expression[] = [];
+
+      const arrayExpression = ts.factory.createArrayLiteralExpression(elements);
+      return arrayExpression;
+   }
 
    public getString(): string {
 
