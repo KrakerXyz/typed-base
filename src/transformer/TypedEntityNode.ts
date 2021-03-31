@@ -4,7 +4,10 @@ import { createFieldConfig } from './fieldFactory';
 
 export class TypedEntityNode {
 
-   private constructor(private readonly _config: EntityConfig, private readonly _expression: ts.LeftHandSideExpression, private readonly _typeNode: ts.TypeNode) { }
+   private constructor(
+      private readonly _config: EntityConfig,
+      private readonly _expression: ts.LeftHandSideExpression,
+      private readonly _typeNode: ts.TypeNode) { }
 
    public static create(node: ts.NewExpression, typeChecker: ts.TypeChecker): TypedEntityNode {
       if (node.typeArguments?.length !== 1) { throw new Error('Expected exactly one generic arguments for TypedEntity'); }
@@ -17,7 +20,7 @@ export class TypedEntityNode {
 
       const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as FieldConfig);
 
-      return new TypedEntityNode({ fields: fieldConfig }, node.expression, typeNode);
+      return new TypedEntityNode({ name: type.symbol.name, fields: fieldConfig }, node.expression, typeNode);
 
    }
 
@@ -27,6 +30,7 @@ export class TypedEntityNode {
       const fieldsObject = this.getFieldConfigExpression(this._config.fields);
 
       const configProperties: ts.ObjectLiteralElementLike[] = [
+         ts.factory.createPropertyAssignment('name', ts.factory.createStringLiteral(this._config.name)),
          ts.factory.createPropertyAssignment('fields', fieldsObject)
       ];
 
@@ -59,72 +63,55 @@ export class TypedEntityNode {
 
       const elements: ts.Expression[] = [];
 
+      for (const v of fieldValue) {
+         switch (v.type) {
+            case ValueType.Null: {
+               elements.push(ts.factory.createObjectLiteralExpression([
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(0))
+               ]));
+               break;
+            }
+            case ValueType.Value: {
+               elements.push(ts.factory.createObjectLiteralExpression([
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(1)),
+                  ts.factory.createPropertyAssignment('value', ts.factory.createStringLiteral(v.value))
+               ]));
+               break;
+            }
+            case ValueType.Literal: {
+
+               const initializer = typeof v.value === 'string' ? ts.factory.createStringLiteral(v.value)
+                  : typeof v.value === 'number' ? ts.factory.createNumericLiteral(v.value)
+                     : v.value ? ts.factory.createTrue()
+                        : ts.factory.createFalse();
+
+               elements.push(ts.factory.createObjectLiteralExpression([
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(2)),
+                  ts.factory.createPropertyAssignment('value', initializer)
+               ]));
+               break;
+            }
+            case ValueType.Object: {
+               elements.push(ts.factory.createObjectLiteralExpression([
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(3)),
+                  ts.factory.createPropertyAssignment('value', this.getFieldConfigExpression(v.value))
+               ]));
+               break;
+            }
+            case ValueType.Array: {
+               elements.push(ts.factory.createObjectLiteralExpression([
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(4)),
+                  ts.factory.createPropertyAssignment('value', this.getFieldValuesExpression(v.value))
+               ]));
+               break;
+            }
+            default: {
+               const _: never = v;
+            }
+         }
+      }
+
       const arrayExpression = ts.factory.createArrayLiteralExpression(elements);
       return arrayExpression;
-   }
-
-   public getString(): string {
-
-      const tokens: string[] = [];
-      tokens.push('{fields:');
-      this.writeFieldConfigString(this._config.fields, tokens);
-      tokens.push('}');
-      return tokens.join('');
-
-   }
-
-   private writeFieldConfigString(field: FieldConfig, tokens: string[]) {
-
-      tokens.push('{');
-      let isFirst = true;
-      for (const key of Object.keys(field)) {
-
-         if (!isFirst) { tokens.push(','); }
-         isFirst = false;
-
-         const f = field[key];
-         tokens.push(`${key}:{allowUndefined:${f.allowUndefined},values:[`);
-
-         let isFirst2 = true;
-         for (const v of f.values) {
-            if (!isFirst2) {
-               tokens.push(',');
-            }
-            this.writeFieldValueString(v, tokens);
-            isFirst2 = false;
-         }
-         tokens.push(']}');
-
-      }
-      tokens.push('}');
-   }
-
-   private writeFieldValueString(value: FieldValue, tokens: string[]) {
-      tokens.push(`{type:${value.type}`);
-      switch (value.type) {
-         case ValueType.Null: break;
-         case ValueType.Literal: {
-            if (typeof value.value === 'string') { tokens.push(`, value:'${value.value}'`); }
-            else { tokens.push(`, value:${value.value}`); }
-            break;
-         }
-         case ValueType.Value: tokens.push(`, value:'${value.value}'`); break;
-         case ValueType.Array: {
-            tokens.push(`, value:[`);
-            for (let i = 0; i < value.value.length; i++) {
-               if (!i) { tokens.push(','); }
-               this.writeFieldValueString(value.value[i], tokens);
-            }
-            tokens.push(']');
-            break;
-         }
-         case ValueType.Object: {
-            tokens.push(', value:');
-            this.writeFieldConfigString(value.value, tokens);
-            break;
-         }
-      }
-
-      tokens.push('}');
    }
 }

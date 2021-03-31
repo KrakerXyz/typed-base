@@ -1,5 +1,6 @@
 
 export interface EntityConfig {
+   name: string;
    fields: FieldConfig;
 }
 
