@@ -40,10 +40,44 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
       case ts.SyntaxKind.LiteralType: {
          const children = t.getChildren();
          if (!children.length || children.length > 1) { throw new Error(`Unexpected number of children for Literal (${fullName})`); }
-         if (children[0].kind !== ts.SyntaxKind.NullKeyword) { throw new Error(`Unknown Literal child kind (${fullName})`); }
-         return [{
-            type: ValueType.Null
-         }];
+
+         const child = children[0];
+         switch (child.kind) {
+            case ts.SyntaxKind.NullKeyword: {
+               return [{
+                  type: ValueType.Null
+               }];
+            }
+            case ts.SyntaxKind.StringLiteral: {
+
+               return [{
+                  type: ValueType.Literal,
+                  value: (child as ts.StringLiteral).text
+               }];
+
+            }
+            case ts.SyntaxKind.NumericLiteral: {
+               return [{
+                  type: ValueType.Literal,
+                  value: parseFloat((child as ts.NumericLiteral).text)
+               }]
+            }
+            case ts.SyntaxKind.FalseKeyword: {
+               return [{
+                  type: ValueType.Literal,
+                  value: false
+               }]
+            }
+            case ts.SyntaxKind.TrueKeyword: {
+               return [{
+                  type: ValueType.Literal,
+                  value: true
+               }]
+            }
+            default: {
+               throw new Error(`Unknown Literal child kind ${ts.SyntaxKind[child.kind]} (${fullName})`);
+            }
+         }
       }
       case ts.SyntaxKind.TypeReference:
       case ts.SyntaxKind.TypeLiteral: {

@@ -10,7 +10,10 @@
       "strict": true,
       "noImplicitReturns": true,
       "noPropertyAccessFromIndexSignature": true,
-      "skipLibCheck": true
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "importHelpers": true,
+      "removeComments": true
    },
    "include": [
       "src/**/*"

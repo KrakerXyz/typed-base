@@ -2,8 +2,7 @@
 import * as ts from 'typescript';
 import { TypedEntityNode } from './TypedEntityNode';
 
-export default function transformer(program: ts.Program): ts.TransformerFactory<ts.SourceFile> {
-
+export default function transformer(program: ts.Program, config: Partial<TransformerConfig>): ts.TransformerFactory<ts.SourceFile> {
    return (context: ts.TransformationContext) => {
 
       const visit: ts.Visitor = (node): ts.Node => {
@@ -15,7 +14,7 @@ export default function transformer(program: ts.Program): ts.TransformerFactory<
                return node;
             }
 
-            const typedEntityNode = TypedEntityNode.create(node, program.getTypeChecker());
+            const typedEntityNode = TypedEntityNode.create(node, program.getTypeChecker(), config);
             const newNode = typedEntityNode.getNode();
             return newNode;
 
@@ -28,4 +27,8 @@ export default function transformer(program: ts.Program): ts.TransformerFactory<
       return (file: ts.SourceFile) => ts.visitNode(file, visit);
    };
 
+}
+
+export interface TransformerConfig {
+   collectionNamingStrategy: 'kebab' | 'pascal' | 'camel' | 'snake';
 }

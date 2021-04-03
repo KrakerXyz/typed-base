@@ -1,6 +1,7 @@
 import { EntityConfig, FieldConfig, FieldValue, ValueType } from '../orm/EntityConfig';
 import * as ts from 'typescript';
 import { createFieldConfig } from './fieldFactory';
+import { TransformerConfig } from './transformer';
 
 export class TypedEntityNode {
 
@@ -9,7 +10,7 @@ export class TypedEntityNode {
       private readonly _expression: ts.LeftHandSideExpression,
       private readonly _typeNode: ts.TypeNode) { }
 
-   public static create(node: ts.NewExpression, typeChecker: ts.TypeChecker): TypedEntityNode {
+   public static create(node: ts.NewExpression, typeChecker: ts.TypeChecker, config: Partial<TransformerConfig>): TypedEntityNode {
       if (node.typeArguments?.length !== 1) { throw new Error('Expected exactly one generic arguments for TypedEntity'); }
 
       const typeNode = node.typeArguments[0];
@@ -20,7 +21,50 @@ export class TypedEntityNode {
 
       const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as FieldConfig);
 
-      return new TypedEntityNode({ name: type.symbol.name, fields: fieldConfig }, node.expression, typeNode);
+      let name = type.symbol.name;
+      let replacer: ((x: string) => string) | null = null;
+      switch (config.collectionNamingStrategy) {
+         case 'camel': {
+            replacer = (() => {
+               let i = 0;
+               return (x: string) => {
+                  i++;
+                  if (i === 1) { return x.toLowerCase(); }
+                  return x[0] + x.substring(1).toLowerCase();
+               }
+            })();
+            break;
+         }
+         case 'kebab':
+            replacer = (() => {
+               let i = 0;
+               return (x: string) => {
+                  i++;
+                  if (i === 1) { return x.toLowerCase(); }
+                  return '-' + x.toLowerCase();
+               }
+            })();
+            break;
+         case 'pascal':
+            replacer = (x) => x[0] + x.substring(1).toLowerCase();
+            break;
+         case 'snake':
+            replacer = (() => {
+               let i = 0;
+               return (x: string) => {
+                  i++;
+                  if (i === 1) { return x.toLowerCase(); }
+                  return '_' + x.toLowerCase();
+               }
+            })();
+            break;
+      }
+
+      if (replacer) {
+         name = name.replace(/[A-Z]+?(?=[a-z]|[A-Z][a-z])/g, replacer);
+      }
+
+      return new TypedEntityNode({ name, fields: fieldConfig }, node.expression, typeNode);
 
    }
 
