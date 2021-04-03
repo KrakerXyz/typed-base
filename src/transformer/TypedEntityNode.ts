@@ -22,6 +22,13 @@ export class TypedEntityNode {
       const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as FieldConfig);
 
       let name = type.symbol.name;
+
+      if (name.endsWith('y')) {
+         name = name.slice(0, -1) + 'ies';
+      } else if (!name.endsWith('s')) {
+         name += 's';
+      }
+
       let replacer: ((x: string) => string) | null = null;
       switch (config.collectionNamingStrategy) {
          case 'camel': {

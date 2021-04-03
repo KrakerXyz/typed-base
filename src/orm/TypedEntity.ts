@@ -33,7 +33,7 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       }
    }
 
-   public async insert(...docs: T[]) {
+   public async insertAsync(...docs: T[]) {
       const col = await getCollectionAsync(this._config.name);
       if (docs.length === 1) {
          await col.insertOne(this._cleaner.clean(docs[0]));
@@ -42,12 +42,17 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       }
    }
 
-   public async replace(doc: T, options?: ReplaceOneOptions) {
+   public async replaceOneAsync(doc: T, options?: ReplaceOneOptions) {
       const col = await getCollectionAsync(this._config.name);
       await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options);
    }
 
-   public async delete(id: string): Promise<void> {
+   public async deleteAsync(query: FilterQuery<T>) {
+      const col = await getCollectionAsync(this._config.name);
+      await col.deleteMany(query);
+   }
+
+   public async deleteOneAsync(id: string): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
       await col.deleteOne({ id });
    }
