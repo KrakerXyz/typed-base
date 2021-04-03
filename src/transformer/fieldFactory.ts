@@ -45,7 +45,8 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
             type: ValueType.Null
          }];
       }
-      case ts.SyntaxKind.TypeReference: {
+      case ts.SyntaxKind.TypeReference:
+      case ts.SyntaxKind.TypeLiteral: {
 
          const refType = t as ts.TypeReferenceNode;
          const type = typeChecker.getTypeFromTypeNode(refType);
