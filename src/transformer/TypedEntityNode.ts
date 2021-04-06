@@ -118,13 +118,13 @@ export class TypedEntityNode {
          switch (v.type) {
             case ValueType.Null: {
                elements.push(ts.factory.createObjectLiteralExpression([
-                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(0))
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(ValueType.Null))
                ]));
                break;
             }
             case ValueType.Value: {
                elements.push(ts.factory.createObjectLiteralExpression([
-                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(1)),
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(ValueType.Value)),
                   ts.factory.createPropertyAssignment('value', ts.factory.createStringLiteral(v.value))
                ]));
                break;
@@ -137,22 +137,28 @@ export class TypedEntityNode {
                         : ts.factory.createFalse();
 
                elements.push(ts.factory.createObjectLiteralExpression([
-                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(2)),
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(ValueType.Literal)),
                   ts.factory.createPropertyAssignment('value', initializer)
                ]));
                break;
             }
             case ValueType.Object: {
                elements.push(ts.factory.createObjectLiteralExpression([
-                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(3)),
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(ValueType.Object)),
                   ts.factory.createPropertyAssignment('value', this.getFieldConfigExpression(v.value))
                ]));
                break;
             }
             case ValueType.Array: {
                elements.push(ts.factory.createObjectLiteralExpression([
-                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(4)),
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(ValueType.Array)),
                   ts.factory.createPropertyAssignment('value', this.getFieldValuesExpression(v.value))
+               ]));
+               break;
+            }
+            case ValueType.Any: {
+               elements.push(ts.factory.createObjectLiteralExpression([
+                  ts.factory.createPropertyAssignment('type', ts.factory.createNumericLiteral(ValueType.Any))
                ]));
                break;
             }

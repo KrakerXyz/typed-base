@@ -6,18 +6,23 @@ export interface EntityConfig {
 
 export type FieldConfig = Record<string, { allowUndefined: boolean, values: FieldValue[] }>
 
-export type FieldValue = LiteralValue | ObjectValue | ValueValue | ArrayValue | NullValue;
+export type FieldValue = LiteralValue | ObjectValue | ValueValue | ArrayValue | NullValue | AnyValue;
 
 export enum ValueType {
    Null,
    Value,
    Literal,
    Object,
-   Array
+   Array,
+   Any
 }
 
 export interface NullValue {
-   type: ValueType.Null
+   type: ValueType.Null;
+}
+
+export interface AnyValue {
+   type: ValueType.Any;
 }
 
 export interface ValueValue {

@@ -24,7 +24,7 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       return this._cleaner.clean(r);
    }
 
-   public async *findAsync(query: FilterQuery<T>): AsyncGenerator<T, void, void> {
+   public async *find(query: FilterQuery<T>): AsyncGenerator<T, void, void> {
       const col = await getCollectionAsync(this._config.name);
       const results = col.find(query)
       for await (const r of results) {
@@ -33,7 +33,7 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       }
    }
 
-   public async insertAsync(...docs: T[]) {
+   public async insertAsync(...docs: T[]): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
       if (docs.length === 1) {
          await col.insertOne(this._cleaner.clean(docs[0]));
@@ -42,12 +42,12 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       }
    }
 
-   public async replaceOneAsync(doc: T, options?: ReplaceOneOptions) {
+   public async replaceOneAsync(doc: T, options?: ReplaceOneOptions): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
       await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options);
    }
 
-   public async deleteAsync(query: FilterQuery<T>) {
+   public async deleteAsync(query: FilterQuery<T>): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
       await col.deleteMany(query);
    }

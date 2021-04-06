@@ -98,6 +98,14 @@ class ValuesCleaner implements Clean {
                });
                break;
             }
+            case ValueType.Any: {
+               this._cleaners.push({
+                  clean(v) {
+                     return { match: 'infer', value: v };
+                  }
+               });
+               break;
+            }
             default: {
                const _: never = value;
             }

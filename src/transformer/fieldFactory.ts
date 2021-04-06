@@ -109,6 +109,10 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
             return values;
          }
 
+         if (refType.typeName.getText() === 'Record') {
+            return [{ type: ValueType.Any }];
+         }
+
          const typeProperties = typeChecker.getPropertiesOfType(type);
          const fields = typeProperties.map(s => createFieldConfig(s, typeChecker));
          const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as FieldConfig);
