@@ -109,7 +109,7 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
             return values;
          }
 
-         if (refType.typeName.getText() === 'Record') {
+         if (refType.typeName?.getText() === 'Record') {
             return [{ type: ValueType.Any }];
          }
 
