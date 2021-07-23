@@ -24,10 +24,7 @@ export async function getCollectionAsync(name: string): Promise<mongo.Collection
    const config = getConfig();
    let client = _clients.get(config.uri);
    if (!client) {
-      client = new mongo.MongoClient(config.uri, config.mongoClientOptions ?? {
-         useNewUrlParser: true,
-         useUnifiedTopology: true
-      });
+      client = new mongo.MongoClient(config.uri, config.mongoClientOptions);
       _clients.set(config.uri, client);
       await client.connect();
    }

@@ -38,7 +38,7 @@ export class TypedEntityNode {
                   i++;
                   if (i === 1) { return x.toLowerCase(); }
                   return x[0] + x.substring(1).toLowerCase();
-               }
+               };
             })();
             break;
          }
@@ -49,7 +49,7 @@ export class TypedEntityNode {
                   i++;
                   if (i === 1) { return x.toLowerCase(); }
                   return '-' + x.toLowerCase();
-               }
+               };
             })();
             break;
          case 'pascal':
@@ -62,7 +62,7 @@ export class TypedEntityNode {
                   i++;
                   if (i === 1) { return x.toLowerCase(); }
                   return '_' + x.toLowerCase();
-               }
+               };
             })();
             break;
       }

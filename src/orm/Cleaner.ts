@@ -84,7 +84,7 @@ class ValuesCleaner implements Clean {
                      const o = cleaner.clean(v);
                      return { match: 'infer', value: o };
                   }
-               })
+               });
                break;
             }
             case ValueType.Array: {
@@ -116,7 +116,7 @@ class ValuesCleaner implements Clean {
    public clean(value: any): CleanResult {
 
       if (value === undefined) {
-         if (this._allowUndefined) { return { match: 'exact', value: undefined } };
+         if (this._allowUndefined) { return { match: 'exact', value: undefined }; }
          if (this._allowNull) { return { match: 'infer', value: null }; }
       } else if (value === null) {
          if (this._allowNull) { return { match: 'exact', value: null }; }
@@ -135,7 +135,7 @@ class ValuesCleaner implements Clean {
       if (this._allowUndefined) { return { match: 'default', value: undefined }; }
       if (this._allowNull) { return { match: 'default', value: null }; }
       if (firstNone) { return firstNone; }
-      throw new Error('Could not determine cleaned value');;
+      throw new Error('Could not determine cleaned value');
    }
 
 }
@@ -159,7 +159,7 @@ class ValueCleaner implements Clean {
                if (value.toLowerCase() === 'false') { return { match: 'infer', value: false }; }
                if (value.toLowerCase() === 'true') { return { match: 'infer', value: true }; }
             } else if (typeof value === 'number') {
-               if (value === 0) { return { match: 'infer', value: false } }
+               if (value === 0) { return { match: 'infer', value: false }; }
             }
 
             return { match: 'default', value: false };

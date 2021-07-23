@@ -31,7 +31,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "mongodb": "^3.6.5"
+    "mongodb": "^4.0.1"
   },
   "devDependencies": {
     "@types/mongodb": "^3.6.11",

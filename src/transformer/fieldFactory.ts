@@ -6,7 +6,7 @@ export function createFieldConfig(symbol: ts.Symbol, typeChecker: ts.TypeChecker
 
    const fullName = `${(symbol as any).parent?.name}.${symbol.name}`;
 
-   if (!symbol.declarations.length) { throw new Error(`Symbol does not have any declarations (${fullName})`); }
+   if (!symbol.declarations?.length) { throw new Error(`Symbol does not have any declarations (${fullName})`); }
    if (symbol.declarations.length > 1) { throw new Error(`More than one declaration for symbol was unexpected (${fullName})`); }
 
    const declaration = symbol.declarations[0];
@@ -16,7 +16,7 @@ export function createFieldConfig(symbol: ts.Symbol, typeChecker: ts.TypeChecker
    config[symbol.name] = {
       allowUndefined: !!declaration.questionToken,
       values: getType(fullName, declaration.type!, typeChecker)
-   }
+   };
 
    return config;
 
@@ -32,11 +32,11 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
       case ts.SyntaxKind.StringKeyword: return [{
          type: ValueType.Value,
          value: 'string'
-      }]
+      }];
       case ts.SyntaxKind.BooleanKeyword: return [{
          type: ValueType.Value,
          value: 'boolean'
-      }]
+      }];
       case ts.SyntaxKind.LiteralType: {
          const children = t.getChildren();
          if (!children.length || children.length > 1) { throw new Error(`Unexpected number of children for Literal (${fullName})`); }
@@ -60,19 +60,19 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
                return [{
                   type: ValueType.Literal,
                   value: parseFloat((child as ts.NumericLiteral).text)
-               }]
+               }];
             }
             case ts.SyntaxKind.FalseKeyword: {
                return [{
                   type: ValueType.Literal,
                   value: false
-               }]
+               }];
             }
             case ts.SyntaxKind.TrueKeyword: {
                return [{
                   type: ValueType.Literal,
                   value: true
-               }]
+               }];
             }
             default: {
                throw new Error(`Unknown Literal child kind ${ts.SyntaxKind[child.kind]} (${fullName})`);
@@ -85,7 +85,7 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
          const refType = t as ts.TypeReferenceNode;
          const type = typeChecker.getTypeFromTypeNode(refType);
 
-         const enumDecl = type.aliasSymbol?.declarations[0];
+         const enumDecl = (type.aliasSymbol?.declarations ?? [])[0];
          if (enumDecl && ts.isEnumDeclaration(enumDecl)) {
             const members = enumDecl.members;
             const values: LiteralValue[] = members.map((m, i) => {

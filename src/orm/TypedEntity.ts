@@ -1,6 +1,6 @@
 
-export { FilterQuery, ReplaceOneOptions } from 'mongodb';
-import type { FilterQuery, ReplaceOneOptions } from 'mongodb';
+export { Filter, ReplaceOptions } from 'mongodb';
+import { Filter, Document, ReplaceOptions } from 'mongodb';
 import { Cleaner } from './Cleaner';
 
 import { getCollectionAsync } from './Client';
@@ -12,21 +12,21 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
    private readonly _cleaner: Cleaner<T>;
 
    public constructor(readonly config?: EntityConfig) {
-      if (!config) { throw new Error('TypedEntity was instantiated without a config'); }
+      if (!config) { throw new Error('TypedEntity was instantiated without a config. Ensure you compiled using ttsc.'); }
       this._config = config!;
       this._cleaner = new Cleaner<T>(config!.fields);
    }
 
-   public async findOneAsync(query: FilterQuery<T>): Promise<T | null> {
+   public async findOneAsync(query: Filter<T>): Promise<T | null> {
       const col = await getCollectionAsync(this._config.name);
       const r = await col.findOne(query);
       if (!r) { return null; }
       return this._cleaner.clean(r);
    }
 
-   public async *find(query: FilterQuery<T>): AsyncGenerator<T, void, void> {
+   public async *find(query: Filter<T>): AsyncGenerator<T, void, void> {
       const col = await getCollectionAsync(this._config.name);
-      const results = col.find(query)
+      const results = col.find(query);
       for await (const r of results) {
          const cleaned = this._cleaner.clean(r);
          yield cleaned;
@@ -42,14 +42,14 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       }
    }
 
-   public async replaceOneAsync(doc: T, options?: ReplaceOneOptions): Promise<void> {
+   public async replaceOneAsync(doc: T, options?: ReplaceOptions): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
-      await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options);
+      await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options ?? {});
    }
 
-   public async deleteAsync(query: FilterQuery<T>): Promise<void> {
+   public async deleteAsync(query: Filter<T>): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
-      await col.deleteMany(query);
+      await col.deleteMany(query as any as Filter<Document>);
    }
 
    public async deleteOneAsync(id: string): Promise<void> {
