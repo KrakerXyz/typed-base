@@ -1,6 +1,6 @@
 
-export { Filter, ReplaceOptions } from 'mongodb';
-import { Filter, Document, ReplaceOptions } from 'mongodb';
+export { Filter, ReplaceOptions, UpdateOptions, FindOptions } from 'mongodb';
+import { Filter, Document, ReplaceOptions, FindCursor, UpdateOptions, FindOptions } from 'mongodb';
 import { Cleaner } from './Cleaner';
 
 import { getCollectionAsync } from './Client';
@@ -24,9 +24,10 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       return this._cleaner.clean(r);
    }
 
-   public async *find(query: Filter<T>): AsyncGenerator<T, void, void> {
+   public async *find(query: Filter<T>, modify?: (cur: FindCursor<T>) => FindCursor<T>, options?: FindOptions<T>): AsyncGenerator<T, void, void> {
       const col = await getCollectionAsync(this._config.name);
-      const results = col.find(query);
+      if (!modify) { modify = (c) => c; }
+      const results = modify(col.find(query, options));
       for await (const r of results) {
          const cleaned = this._cleaner.clean(r);
          yield cleaned;
@@ -45,6 +46,11 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
    public async replaceOneAsync(doc: T, options?: ReplaceOptions): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
       await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options ?? {});
+   }
+
+   public async updateOne(filter: Filter<T>, doc: T, options?: UpdateOptions): Promise<void> {
+      const col = await getCollectionAsync(this._config.name);
+      await col.updateOne(filter as Filter<Document>, doc, options ?? {});
    }
 
    public async deleteAsync(query: Filter<T>): Promise<void> {
