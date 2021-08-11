@@ -29,6 +29,7 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
          type: ValueType.Value,
          value: 'number'
       }];
+      case ts.SyntaxKind.TemplateLiteralType:
       case ts.SyntaxKind.StringKeyword: return [{
          type: ValueType.Value,
          value: 'string'
