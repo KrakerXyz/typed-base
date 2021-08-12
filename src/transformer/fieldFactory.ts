@@ -4,7 +4,7 @@ import { FieldConfig, FieldValue, LiteralValue, ValueType } from '../orm';
 
 export function createFieldConfig(symbol: ts.Symbol, typeChecker: ts.TypeChecker): FieldConfig {
 
-   const fullName = `${(symbol as any).parent?.name}.${symbol.name}`;
+   const fullName = getFullName(symbol);
 
    if (!symbol.declarations?.length) { throw new Error(`Symbol does not have any declarations (${fullName})`); }
    if (symbol.declarations.length > 1) { throw new Error(`More than one declaration for symbol was unexpected (${fullName})`); }
@@ -20,6 +20,12 @@ export function createFieldConfig(symbol: ts.Symbol, typeChecker: ts.TypeChecker
 
    return config;
 
+}
+
+function getFullName(sym: ts.Symbol): string {
+   const parent = (sym as any).parent;
+   const parentName = parent?.name ? `${getFullName(parent)}.` : '';
+   return `${parentName}${sym.name}`;
 }
 
 function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker): FieldValue[] {
@@ -112,6 +118,24 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
 
          if (refType.typeName?.getText() === 'Record') {
             return [{ type: ValueType.Any }];
+         }
+
+         const texts: string[] | undefined = (type as any).texts;
+         if (texts?.length && texts[0] == '' && texts.slice(-1)[0] === '') {
+            //When we have something like 
+            //
+            //type Id = `${string}-${string}`
+            //interface Foo {
+            //   id: Id
+            //}
+            //We end up getting this TypeLiteral but I can find no way to see that it is a string literal other than hoping this texts test is sufficient.
+            //From what I've seen, no matter the interpolations, the texts always has '' as the first and last elements. For the above example, it would be
+            //['', '-', '']
+            return [{
+               type: ValueType.Value,
+               value: 'string'
+            }];
+
          }
 
          const typeProperties = typeChecker.getPropertiesOfType(type);

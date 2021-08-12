@@ -5,26 +5,31 @@ import { TypedEntityNode } from './TypedEntityNode';
 export default function transformer(program: ts.Program, config: Partial<TransformerConfig>): ts.TransformerFactory<ts.SourceFile> {
    return (context: ts.TransformationContext) => {
 
-      const visit: ts.Visitor = (node): ts.Node => {
+      return (file: ts.SourceFile) => {
 
-         if (ts.isNewExpression(node) && node.expression.getText() === 'TypedEntity') {
+         const visit: ts.Visitor = (node): ts.Node => {
 
-            //If the user gave an explicit config, don't overwrite them
-            if (node.arguments?.length) {
-               return node;
+            if (ts.isNewExpression(node) && node.expression.getText() === 'TypedEntity') {
+
+               //If the user gave an explicit config, don't overwrite them
+               if (node.arguments?.length) {
+                  return node;
+               }
+
+               console.log(`Generating TypedEntity() in ${file.fileName}`);
+               const typedEntityNode = TypedEntityNode.create(node, program.getTypeChecker(), config);
+               const newNode = typedEntityNode.getNode();
+               return newNode;
+
             }
 
-            const typedEntityNode = TypedEntityNode.create(node, program.getTypeChecker(), config);
-            const newNode = typedEntityNode.getNode();
-            return newNode;
+            return ts.visitEachChild(node, (child) => visit(child), context);
 
-         }
+         };
 
-         return ts.visitEachChild(node, (child) => visit(child), context);
-
+         return ts.visitNode(file, visit);
       };
 
-      return (file: ts.SourceFile) => ts.visitNode(file, visit);
    };
 
 }
