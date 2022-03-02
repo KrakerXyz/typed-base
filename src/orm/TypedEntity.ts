@@ -27,7 +27,7 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
    public async *find(query: Filter<T>, modify?: (cur: FindCursor<T>) => FindCursor<{ [k in keyof Partial<T>]: any }>, options?: FindOptions<T>): AsyncGenerator<T, void, void> {
       const col = await getCollectionAsync(this._config.name);
       if (!modify) { modify = (c) => c; }
-      const results = modify(col.find(query, options));
+      const results = modify(col.find<T>(query, options));
       for await (const r of results) {
          const cleaned = this._cleaner.clean(r);
          yield cleaned;
