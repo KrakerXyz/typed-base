@@ -1,6 +1,6 @@
 
 export { Filter, ReplaceOptions, UpdateOptions, FindOptions } from 'mongodb';
-import { Filter, Document, ReplaceOptions, FindCursor, UpdateOptions, FindOptions } from 'mongodb';
+import { Filter, Document, ReplaceOptions, FindCursor, UpdateOptions, FindOptions, UpdateFilter } from 'mongodb';
 import { Cleaner } from './Cleaner';
 
 import { getCollectionAsync } from './Client';
@@ -48,7 +48,7 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
       await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options ?? {});
    }
 
-   public async updateOne(filter: Filter<T>, doc: T, options?: UpdateOptions): Promise<void> {
+   public async updateOne(filter: Filter<T>, doc: UpdateFilter<T>, options?: UpdateOptions): Promise<void> {
       const col = await getCollectionAsync(this._config.name);
       await col.updateOne(filter as Filter<Document>, doc, options ?? {});
    }
