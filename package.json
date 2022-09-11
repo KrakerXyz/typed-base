@@ -6,7 +6,7 @@
         "type": "git",
         "url": "https://github.com/KrakerXyz/typed-base"
     },
-    "version": "0.1.0",
+    "version": "0.2.0",
     "type": "commonjs",
     "main": "./dist/cjs/index.js",
     "module": "./dist/esm/index.js",
@@ -28,8 +28,7 @@
         "clean": "rimraf ./dist/*",
         "build": "npm run clean && tsc && tsc -p tsconfig-cjs.json",
         "lint": "eslint ./src/**/*.ts",
-        "prepublishOnly": "npm run build",
-        "publish": "npm publish --access public"
+        "prepublishOnly": "npm run build"
     },
     "dependencies": {
         "mongodb": "^4.0.1"
