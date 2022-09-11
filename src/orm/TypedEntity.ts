@@ -48,9 +48,14 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
         await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options ?? {});
     }
 
-    public async updateOne(filter: Filter<T>, doc: UpdateFilter<T>, options?: UpdateOptions): Promise<void> {
+    public async updateOneAsync(filter: Filter<T>, doc: UpdateFilter<T>, options?: UpdateOptions): Promise<void> {
         const col = await getCollectionAsync(this._config.name);
         await col.updateOne(filter as Filter<Document>, doc, options ?? {});
+    }
+
+    public async upsertOneAsync(doc: T): Promise<void> {
+        const col = await getCollectionAsync(this._config.name);
+        col.updateOne({ id: doc.id }, doc, { upsert: true });
     }
 
     public async deleteAsync(query: Filter<T>): Promise<void> {
