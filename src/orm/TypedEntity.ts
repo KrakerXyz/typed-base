@@ -1,7 +1,7 @@
 
 export { Filter, ReplaceOptions, UpdateOptions, FindOptions } from 'mongodb';
 import { Filter, Document, ReplaceOptions, FindCursor, UpdateOptions, FindOptions, UpdateFilter } from 'mongodb';
-import { UpsertResult } from '.';
+import { UpdateResult } from '.';
 import { Cleaner } from './Cleaner';
 
 import { getCollectionAsync } from './Client';
@@ -44,23 +44,18 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
         }
     }
 
-    public async replaceOneAsync(doc: T, options?: ReplaceOptions): Promise<void> {
+    public async replaceOneAsync(doc: T, options?: ReplaceOptions): Promise<UpdateResult> {
         const col = await getCollectionAsync(this._config.name);
-        await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options ?? {});
+        const result = await col.replaceOne({ id: doc.id }, this._cleaner.clean(doc), options ?? {});
+        return {
+            updated: result.modifiedCount,
+            inserted: result.upsertedCount
+        };
     }
 
     public async updateOneAsync(filter: Filter<T>, doc: UpdateFilter<T>, options?: UpdateOptions): Promise<void> {
         const col = await getCollectionAsync(this._config.name);
         await col.updateOne(filter as Filter<Document>, doc, options ?? {});
-    }
-
-    public async upsertOneAsync(doc: T): Promise<UpsertResult> {
-        const col = await getCollectionAsync(this._config.name);
-        const result = await col.updateOne({ id: doc.id }, doc, { upsert: true });
-        return {
-            inserted: !!result.upsertedCount,
-            updated: !!result.modifiedCount
-        };
     }
 
     public async deleteAsync(query: Filter<T>): Promise<void> {
