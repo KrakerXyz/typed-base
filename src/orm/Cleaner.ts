@@ -94,7 +94,7 @@ class ValuesCleaner implements Clean {
                         clean(v) {
                             if (!Array.isArray(v)) { return { match: 'default', value: [] }; }
                             const result = v.map(i => valueCleaner.clean(i));
-                            return { match: 'exact', value: result };
+                            return { match: 'exact', value: result.map(x => x.value) };
                         }
                     });
                     break;
