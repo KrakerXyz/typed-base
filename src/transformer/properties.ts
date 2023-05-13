@@ -105,6 +105,36 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
                             type: ValueType.Literal,
                             value: (ut as any).value
                         });
+                    } else if ('properties' in ut) {
+
+                        // Found by having a type that is a union of two interfaces
+                        /*
+
+                        type FooBar = Foo | Bar;
+
+                        interface Parent {
+                            fooBar: FooBar; // This is the one we're fixing
+                        }
+                        }
+
+                        interface Foo {
+                            foo: string;
+                        }
+
+                        interface Bar {
+                            bar: string;
+                        }
+
+                        */
+                        const typeProperties = typeChecker.getPropertiesOfType(ut);
+                        const fields = typeProperties.map(s => ({ [s.name]: createProperty(typeChecker, s) }));
+                        const fieldConfig = fields.reduce((prev, cur) => ({ ...prev, ...cur }), {} as Record<string, Property>);
+
+                        properties.push({
+                            type: ValueType.Object,
+                            value: fieldConfig
+                        });
+
                     } else {
                         console.error(`Unknown union type '${ut.getSymbol()?.name}'`, ut);
                         throw new Error(`Unknown union type '${ut.getSymbol()?.name}'`);
@@ -233,39 +263,39 @@ export type Property = { isOptional: boolean, values: PropertyValue[] }
 export type PropertyValue = LiteralValue | ObjectValue | ValueValue | ArrayValue | NullValue | AnyValue | TupleValue;
 
 export interface NullValue {
-    type: ValueType.Null;
+    type: ValueType.Null,
 }
 
 export interface AnyValue {
-    type: ValueType.Any;
+    type: ValueType.Any,
 }
 
 export interface ValueValue {
-    type: ValueType.Value;
-    value: 'number' | 'string' | 'boolean';
+    type: ValueType.Value,
+    value: 'number' | 'string' | 'boolean',
 }
 
 /** Represents a set of literal values that are acceptable for a field. A typical use case if for enum values where the values list would be a number for each index of the enum */
 export interface LiteralValue {
-    type: ValueType.Literal;
-    value: number | string | boolean;
+    type: ValueType.Literal,
+    value: number | string | boolean,
 }
 
 export interface ObjectValue {
-    type: ValueType.Object;
-    value: Properties;
+    type: ValueType.Object,
+    value: Properties,
 }
 
 export interface ArrayValue {
-    type: ValueType.Array;
+    type: ValueType.Array,
     /** Array of the possible value types for the array */
-    value: PropertyValue[];
+    value: PropertyValue[],
     /** Indicates that this array was part of a spread (...) */
-    isRest?: boolean;
+    isRest?: boolean,
 }
 
 export interface TupleValue {
     type: ValueType.Tuple,
     /** The value types possible for each element of the Tuple */
-    value: PropertyValue[][]
+    value: PropertyValue[][],
 }

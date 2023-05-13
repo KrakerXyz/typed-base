@@ -49,7 +49,7 @@ class ObjectCleaner {
 type CleanResult = { match: 'exact' | 'infer' | 'default', value: any };
 
 interface Clean {
-    clean(value: any): CleanResult;
+    clean(value: any): CleanResult,
 }
 
 class ValuesCleaner implements Clean {
@@ -94,7 +94,7 @@ class ValuesCleaner implements Clean {
                         clean(v) {
                             if (!Array.isArray(v)) { return { match: 'default', value: [] }; }
                             const result = v.map(i => valueCleaner.clean(i));
-                            return { match: 'exact', value: result.map(x => x.value) };
+                            return { match: 'exact', value: result };
                         }
                     });
                     break;

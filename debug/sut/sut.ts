@@ -1,11 +1,21 @@
 
 import { TypedEntity } from '../../src/orm/TypedEntity';
 
-type AnimationVersion = number | 'draft';
-
-interface Animation {
-    id: string;
-    version: AnimationVersion;
+interface TestType {
+    id: string,
+    actions: Action[],
 }
 
-const _ = new TypedEntity<Animation>();
+type Action = TestAction | TestAction2;
+
+interface TestAction {
+    name: 'one',
+    twp: number,
+}
+
+interface TestAction2 {
+    name: 'two',
+    other: boolean,
+}
+
+const _ = new TypedEntity<TestType>();
