@@ -1,13 +1,12 @@
 
-export { Filter, ReplaceOptions, UpdateOptions, FindOptions } from 'mongodb';
-import { Filter, Document, ReplaceOptions, FindCursor, UpdateOptions, FindOptions, UpdateFilter } from 'mongodb';
+import { Filter, FindCursor, FindOptions, ReplaceOptions, UpdateFilter, UpdateOptions } from 'mongodb';
 import { UpdateResult } from '.';
 import { Cleaner } from './Cleaner';
 
 import { getCollectionAsync } from './Client';
 import { EntityConfig } from './EntityConfig';
 
-export class TypedEntity<T extends { id: string } & Record<string, any>> {
+export class TypedEntity<T extends { id: string}> {
 
     private readonly _config: EntityConfig;
     private readonly _cleaner: Cleaner<T>;
@@ -18,9 +17,9 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
         this._cleaner = new Cleaner<T>(config!.fields);
     }
 
-    public async findOneAsync(query: Filter<T>): Promise<T | null> {
+    public async findOneAsync(query: Filter<T>, options?: FindOptions<T>): Promise<T | null> {
         const col = await getCollectionAsync(this._config.name);
-        const r = await col.findOne(query);
+        const r = await col.findOne(query as Filter<any>, options);
         if (!r) { return null; }
         return this._cleaner.clean(r);
     }
@@ -28,7 +27,7 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
     public async *find(query: Filter<T>, modify?: (cur: FindCursor<T>) => FindCursor<{ [k in keyof Partial<T>]: any }>, options?: FindOptions<T>): AsyncGenerator<T, void, void> {
         const col = await getCollectionAsync(this._config.name);
         if (!modify) { modify = (c) => c; }
-        const results = modify(col.find<T>(query, options));
+        const results = modify(col.find<T>(query as Filter<any>, options));
         for await (const r of results) {
             const cleaned = this._cleaner.clean(r);
             yield cleaned;
@@ -55,12 +54,12 @@ export class TypedEntity<T extends { id: string } & Record<string, any>> {
 
     public async updateOneAsync(filter: Filter<T>, doc: UpdateFilter<T>, options?: UpdateOptions): Promise<void> {
         const col = await getCollectionAsync(this._config.name);
-        await col.updateOne(filter as Filter<Document>, doc, options ?? {});
+        await col.updateOne(filter as Filter<any>, doc, options ?? {});
     }
 
     public async deleteAsync(query: Filter<T>): Promise<void> {
         const col = await getCollectionAsync(this._config.name);
-        await col.deleteMany(query as any as Filter<Document>);
+        await col.deleteMany(query as Filter<any>);
     }
 
     public async deleteOneAsync(id: string): Promise<void> {
