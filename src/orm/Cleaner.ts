@@ -89,10 +89,49 @@ class ValuesCleaner implements Clean {
                     break;
                 }
                 case ValueType.Array: {
-                    let valueCleaner: {clean(o: any): any} = new ValuesCleaner(false, value.value);
+                    const valueCleaner: {clean(o: any): any} = new ValuesCleaner(false, value.value);
 
-                    if (value.value.length === 1 && value.value[0].type === ValueType.Object) {
-                        valueCleaner = new ObjectCleaner(value.value[0].value, false, false);
+                    if (value.value.every(v => v.type === ValueType.Object)) {
+
+                        const discriminators: { propName: string, value: string | number | boolean, cleaner: { clean(o: any): any } }[] = [];
+
+                        for(const v of value.value) {
+                            if (v.type !== ValueType.Object) { throw new Error('assert failed'); }
+                            const valueDiscriminator: { propName: string, value: string | number | boolean, cleaner: { clean(o: any): any } }[] = [];
+                            
+                            for(const key of Object.getOwnPropertyNames(v.value)) {
+                                const field = v.value[key];
+                                if (field.values.length !== 1) { continue; }
+                                const value = field.values[0];
+                                if (value.type !== ValueType.Literal) { continue; }
+
+                                const objCleaner = new ObjectCleaner(v.value, false, false);
+
+                                valueDiscriminator.push({
+                                    propName: key,
+                                    value: value.value,
+                                    cleaner: objCleaner
+                                });
+                            }
+
+                            if (valueDiscriminator.length === 0) { throw new Error('Discriminator not found'); }
+
+                            if (valueDiscriminator.length > 1) {
+                                throw new Error('Multiple discriminators not supported');
+                            }
+
+                            discriminators.push(valueDiscriminator[0]);
+                        }
+
+                        valueCleaner.clean = (v) => {
+                            for (const d of discriminators) {
+                                if (d.value === v[d.propName]) {
+                                    return d.cleaner.clean(v);
+                                }
+                            }
+
+                            throw new Error('Could not find applicable based on value');
+                        };
                     }
 
                     this._cleaners.push({
