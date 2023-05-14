@@ -1,5 +1,3 @@
-
-
 console.log('Starting cleaner test (see index.ts)');
 import { Cleaner } from '../src/orm/Cleaner';
 testCleaner();
@@ -40,13 +38,13 @@ function* walkDirectorySync(dir: string): Generator<string> {
     }
 }
 
-const rootFiles = [...walkDirectorySync(path.join(__dirname, '..\\..\\debug\\sut'))].filter(f => f.endsWith('.ts'));
+const rootFiles = [
+    ...walkDirectorySync(path.join(__dirname, '..\\..\\debug\\sut')),
+].filter((f) => f.endsWith('.ts'));
 
 const program = ts.createProgram(rootFiles, compilerOptions, compilerHost);
 const emitResult = program.emit(undefined, undefined, undefined, undefined, {
-    before: [
-        transformer(program, {})
-    ]
+    before: [transformer(program, {})],
 });
 
 if (emitResult.emitSkipped) {
@@ -59,7 +57,7 @@ console.log();
 
 function testCleaner() {
     const fieldConfig = {
-        name: 'library-widget-domains',
+        name: 'flow-domains',
         fields: {
             revId: {
                 allowUndefined: false,
@@ -69,8 +67,7 @@ function testCleaner() {
                 allowUndefined: false,
                 values: [{ type: 'val', value: 'number' }],
             },
-            id: { allowUndefined: false, values: [{ type: 'val', value: 'string' }] },
-            libraryId: {
+            id: {
                 allowUndefined: false,
                 values: [{ type: 'val', value: 'string' }],
             },
@@ -82,15 +79,11 @@ function testCleaner() {
                 allowUndefined: false,
                 values: [{ type: 'val', value: 'string' }],
             },
-            script: {
+            description: {
                 allowUndefined: false,
-                values: [{ type: 'val', value: 'string' }],
+                values: [{ type: 'val', value: 'string' }, { type: 'nil' }],
             },
-            scriptValid: {
-                allowUndefined: false,
-                values: [{ type: 'val', value: 'boolean' }],
-            },
-            codeIssues: {
+            actions: {
                 allowUndefined: false,
                 values: [
                     {
@@ -99,84 +92,54 @@ function testCleaner() {
                             {
                                 type: 'obj',
                                 value: {
-                                    severity: {
+                                    id: {
+                                        allowUndefined: false,
+                                        values: [{ type: 'val', value: 'string' }],
+                                    },
+                                    type: {
+                                        allowUndefined: false,
+                                        values: [{ type: 'lit', value: 'create-widget' }],
+                                    },
+                                    widgetId: {
                                         allowUndefined: false,
                                         values: [
-                                            { type: 'lit', value: 'error' },
-                                            { type: 'lit', value: 'warning' },
+                                            { type: 'val', value: 'string' },
+                                            { type: 'val', value: 'string' },
                                         ],
                                     },
-                                    line: {
-                                        allowUndefined: false,
-                                        values: [{ type: 'val', value: 'number' }],
-                                    },
-                                    col: {
-                                        allowUndefined: false,
-                                        values: [{ type: 'val', value: 'number' }],
-                                    },
-                                    message: {
+                                    outputName: {
                                         allowUndefined: false,
                                         values: [{ type: 'val', value: 'string' }],
                                     },
                                 },
                             },
-                        ],
-                    },
-                ],
-            },
-            compiled: {
-                allowUndefined: false,
-                values: [{ type: 'val', value: 'string' }, { type: 'nil' }],
-            },
-            methods: {
-                allowUndefined: false,
-                values: [
-                    {
-                        type: 'arr',
-                        value: [
                             {
                                 type: 'obj',
                                 value: {
-                                    name: {
+                                    id: {
                                         allowUndefined: false,
                                         values: [{ type: 'val', value: 'string' }],
                                     },
-                                    returnType: {
+                                    type: {
+                                        allowUndefined: false,
+                                        values: [{ type: 'lit', value: 'method-call' }],
+                                    },
+                                    methodName: {
                                         allowUndefined: false,
                                         values: [{ type: 'val', value: 'string' }],
                                     },
-                                    inputs: {
+                                    inputNames: {
                                         allowUndefined: false,
                                         values: [
                                             {
                                                 type: 'arr',
-                                                value: [
-                                                    {
-                                                        type: 'obj',
-                                                        value: {
-                                                            name: {
-                                                                allowUndefined: false,
-                                                                values: [
-                                                                    {
-                                                                        type: 'val',
-                                                                        value: 'string',
-                                                                    },
-                                                                ],
-                                                            },
-                                                            type: {
-                                                                allowUndefined: false,
-                                                                values: [
-                                                                    {
-                                                                        type: 'val',
-                                                                        value: 'string',
-                                                                    },
-                                                                ],
-                                                            },
-                                                        },
-                                                    },
-                                                ],
+                                                value: [{ type: 'val', value: 'string' }],
                                             },
                                         ],
+                                    },
+                                    outputName: {
+                                        allowUndefined: false,
+                                        values: [{ type: 'val', value: 'string' }],
                                     },
                                 },
                             },
@@ -188,30 +151,20 @@ function testCleaner() {
     };
 
     const value = {
-        revId: '25d11a1d-7e2a-4c8e-9cf3-30311f97075a',
-        revNumber: 4,
-        id: '25d11a1d-7e2a-4c8e-9cf3-30311f97075a/4',
-        libraryId: '689cd0ff-3aa3-4554-b828-da303e76d59b',
-        created: 1684014049085.0,
-        name: 'ItemsWidget',
-        script:
-      '\r\n\r\nexport default class ItemsWidget {\r\n    \r\n    private constructor(private readonly c: mr.IContext) {\r\n\r\n    }\r\n\r\n    public static create(c: mr.IContext): Promise<ItemsWidget> {\r\n        const url = new mr.pageUtil.Url(c.page.url());\r\n        if (url.path !== \'/ui/items\') { throw new Error(\'Page should be on /ui/items\'); }\r\n        return Promise.resolve(new ItemsWidget(c));\r\n    }\r\n\r\n    public async newItem(item: Partial<{\r\n        number: string,\r\n        description: string,\r\n    }>): Promise<void> {\r\n        this.c.log.info(\'Opening new item dialog\');\r\n        this.c.log.debug(\'Getting new item button\');\r\n        const button = await mr.pageUtil.waitForElementByText(this.c.page, \'button\', \'Item\', 10000); //long because the page could still be loading\r\n\r\n        // I think we need to wait for the items grid to finish loading or once it does, it just resets the previous button click. This is easier\r\n        await mr.pageUtil.sleep(1000);\r\n\r\n        this.c.screenCap();\r\n        \r\n        this.c.log.debug(\'Clicking new item button\');\r\n        await button.click();\r\n\r\n        this.c.log.debug(\'Waiting for input\');\r\n        // For some reason there\'s two of these inputs rendered. One with and one without readonly\r\n        const itemNumberInput = await mr.pageUtil.waitForSelector(this.c.page, \'j-input[label="Item Number" i] input:not(:read-only)\', 5000);\r\n\r\n        await mr.pageUtil.sleep(500); //animation\r\n\r\n        this.c.screenCap();\r\n\r\n        if (item.number) {\r\n            this.c.log.debug(\'Setting item number\');\r\n            await mr.pageUtil.setInputValue(this.c.page, itemNumberInput, item.number);\r\n        }\r\n\r\n        if (item.description) {\r\n            this.c.log.debug(\'Get description input\');\r\n            const description = await mr.pageUtil.waitForSelector(this.c.page, \'j-input[label="Description" i] input:not(:read-only)\', 1000);\r\n\r\n            this.c.log.debug(\'Setting description\');\r\n            await mr.pageUtil.setInputValue(this.c.page, description, item.description);\r\n        }\r\n\r\n        await this.c.screenCap();\r\n\r\n    }\r\n\r\n}\r\n',
-        scriptValid: true,
-        codeIssues: [],
-        compiled:
-      'export default class ItemsWidget {\n  constructor(c) {\n    this.c = c;\n  }\n  static create(c) {\n    const url = new mr.pageUtil.Url(c.page.url());\n    if (url.path !== \'/ui/items\') {\n      throw new Error(\'Page should be on /ui/items\');\n    }\n    return Promise.resolve(new ItemsWidget(c));\n  }\n  async newItem(item) {\n    this.c.log.info(\'Opening new item dialog\');\n    this.c.log.debug(\'Getting new item button\');\n    const button = await mr.pageUtil.waitForElementByText(this.c.page, \'button\', \'Item\', 10000); //long because the page could still be loading\n\n    // I think we need to wait for the items grid to finish loading or once it does, it just resets the previous button click. This is easier\n    await mr.pageUtil.sleep(1000);\n    this.c.screenCap();\n    this.c.log.debug(\'Clicking new item button\');\n    await button.click();\n    this.c.log.debug(\'Waiting for input\');\n    // For some reason there\'s two of these inputs rendered. One with and one without readonly\n    const itemNumberInput = await mr.pageUtil.waitForSelector(this.c.page, \'j-input[label="Item Number" i] input:not(:read-only)\', 5000);\n    await mr.pageUtil.sleep(500); //animation\n\n    this.c.screenCap();\n    if (item.number) {\n      this.c.log.debug(\'Setting item number\');\n      await mr.pageUtil.setInputValue(this.c.page, itemNumberInput, item.number);\n    }\n    if (item.description) {\n      this.c.log.debug(\'Get description input\');\n      const description = await mr.pageUtil.waitForSelector(this.c.page, \'j-input[label="Description" i] input:not(:read-only)\', 1000);\n      this.c.log.debug(\'Setting description\');\n      await mr.pageUtil.setInputValue(this.c.page, description, item.description);\n    }\n    await this.c.screenCap();\n  }\n}',
-        methods: [
+        'revId' : '1ac2f9b8-2cbd-4070-ac83-9862e9adc6b7',
+        'revNumber' : 6,
+        'id' : '1ac2f9b8-2cbd-4070-ac83-9862e9adc6b7/6',
+        'created' : 1684073689126.0,
+        'name' : 'Full Test',
+        'description' : '',
+        'actions' : [ 
             {
-                name: 'newItem',
-                returnType: 'Promise<void>',
-                inputs: [
-                    {
-                        name: 'unknown',
-                        type: 'Partial',
-                    },
-                ],
-            },
-        ],
+                'id' : '1de30c39-2c0c-4cbe-801f-b56db9b96310',
+                'type' : 'create-widget',
+                'widgetId' : '09c93cd1-97a2-4372-8212-95a4f1f538db/10',
+                'outputName' : 'NavWidget'
+            }
+        ]
     };
 
     const cleaner = new Cleaner(fieldConfig.fields as any);
