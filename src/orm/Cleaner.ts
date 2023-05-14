@@ -89,11 +89,19 @@ class ValuesCleaner implements Clean {
                     break;
                 }
                 case ValueType.Array: {
-                    const valueCleaner = new ValuesCleaner(false, value.value);
+                    let valueCleaner: {clean(o: any): any} = new ValuesCleaner(false, value.value);
+
+                    if (value.value.length === 1 && value.value[0].type === ValueType.Object) {
+                        valueCleaner = new ObjectCleaner(value.value[0].value, false, false);
+                    }
+
                     this._cleaners.push({
                         clean(v) {
                             if (!Array.isArray(v)) { return { match: 'default', value: [] }; }
-                            const result = v.map(i => valueCleaner.clean(i));
+                            const result = v.map(i => {
+                                const c = valueCleaner.clean(i);
+                                return c;
+                            });
                             return { match: 'exact', value: result };
                         }
                     });
