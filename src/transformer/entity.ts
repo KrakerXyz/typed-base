@@ -53,10 +53,10 @@ function getEntityTypeFromType(typeChecker: ts.TypeChecker, type: ts.Type): Enti
 }
 
 export interface Entity {
-    isArray: boolean;
-    allowedTypes: EntityType[];
+    isArray: boolean,
+    allowedTypes: EntityType[],
 }
 
 export interface EntityType {
-    properties: Properties;
+    properties: Properties,
 }
