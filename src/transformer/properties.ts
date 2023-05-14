@@ -14,15 +14,16 @@ export function createProperty(typeChecker: ts.TypeChecker, symbol: ts.Symbol): 
     }
 
     const declaration = symbol.declarations[0];
-    if (!ts.isPropertySignature(declaration)) {
-        throw new Error(`Declaration for symbol was not a PropertyDeclaration (${fullName}). It was ${ts.SyntaxKind[declaration.kind]}`);
-    }
+
+    if(!('type' !in declaration)) { throw new Error(`Declaration does not have a type (${fullName})`); }
 
     const isPartial = (symbol as any).mappedType?.aliasSymbol?.escapedName === 'Partial';
 
+    const values = getType(fullName, (declaration as any).type, typeChecker);
+
     return {
-        isOptional: !!declaration.questionToken || isPartial,
-        values: getType(fullName, declaration.type!, typeChecker)
+        isOptional: (('questionToken' in declaration) && !!declaration.questionToken) || isPartial,
+        values
     };
 
 }
@@ -188,8 +189,8 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
             }
 
             const texts: string[] | undefined = (type as any).texts;
-            if (texts?.length && texts[0] == '' && texts.slice(-1)[0] === '') {
-                //When we have something like 
+            if (texts?.length && texts[0] == '') {
+                //When we have something like
                 //
                 //type Id = `${string}-${string}`
                 //interface Foo {
@@ -198,6 +199,8 @@ function getType(fullName: string, t: ts.TypeNode, typeChecker: ts.TypeChecker):
                 //We end up getting this TypeLiteral but I can find no way to see that it is a string literal other than hoping this texts test is sufficient.
                 //From what I've seen, no matter the interpolations, the texts always has '' as the first and last elements. For the above example, it would be
                 //['', '-', '']
+                
+                //20230513- Found that if we have something like `${string}/latest' the last element is not '' but '/latest' so we need to check for that
                 return [{
                     type: ValueType.Value,
                     value: 'string'

@@ -1,21 +1,47 @@
 
 import { TypedEntity } from '../../src/orm/TypedEntity';
 
-interface TestType {
-    id: string,
+export type Id = `${string}-${string}-${string}-${string}-${string}`;
+export type IdRev = `${Id}/${number}`;
+export type IdRevLatest = `${Id}/latest`;
+
+export interface Flow {
+    id: IdRev,
+    name: string,
+    description: string | null,
+    setup: FlowSetup,
     actions: Action[],
 }
 
-type Action = TestAction | TestAction2;
-
-interface TestAction {
-    name: 'one',
-    twp: number,
+export interface FlowSetup {
+    variables: Variable[],
 }
 
-interface TestAction2 {
-    name: 'two',
-    other: boolean,
+export interface Variable {
+    name: string,
+    value: string | boolean | null,
 }
 
-const _ = new TypedEntity<TestType>();
+export type Action = CreateWidgetAction | MethodCallAction;
+
+interface CreateWidgetAction {
+    id: Id,
+    name: 'create-widget',
+    widgetId: IdRev | IdRevLatest,
+}
+
+interface MethodCallAction {
+    id: Id,
+    name: 'method-call',
+    widgetSource: {
+        type: 'widget-name',
+        name: string,
+    } | {
+        type: 'create-action-id',
+        actionId: Id,
+    },
+    methodName: string,
+}
+
+
+const _ = new TypedEntity<Flow>();
