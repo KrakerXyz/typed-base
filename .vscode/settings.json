@@ -1,8 +1,14 @@
 {
-   "cSpell.words": [
-    "cosmosdb",
-    "Kraker",
-    "ttsc",
-    "upserted"
-]
+    "cSpell.words": [
+        "cosmosdb",
+        "Kraker",
+        "ttsc",
+        "upserted"
+    ],
+    "eslint.validate": [
+        "javascript",
+        "typescript",
+        "vue",
+        "html"
+    ]
 }
